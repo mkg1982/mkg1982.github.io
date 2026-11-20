@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ГлупоGPT — Самый бесполезный ИИ</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #1e1e2e;
+            color: #cdd6f4;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .chat-container {
+            width: 100%;
+            max-width: 500px;
+            background: #313244;
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+            display: flex;
+            flex-direction: column;
+            height: 80vh;
+            overflow: hidden;
+        }
+        .header {
+            background: #181825;
+            padding: 16px 20px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            border-bottom: 1px solid #45475a;
+        }
+        .avatar {
+            font-size: 32px;
+            background: #f38ba8;
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .header-info h2 {
+            margin: 0;
+            font-size: 18px;
+            color: #fff;
+        }
+        .header-info span {
+            font-size: 12px;
+            color: #a6adc8;
+        }
+        .messages {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .msg {
+            max-width: 80%;
+            padding: 12px 16px;
+            border-radius: 14px;
+            line-height: 1.4;
+            font-size: 15px;
+            animation: fadeIn 0.2s ease;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .msg.bot {
+            background: #45475a;
+            align-self: flex-start;
+            border-bottom-left-radius: 4px;
+        }
+        .msg.user {
+            background: #89b4fa;
+            color: #11111b;
+            align-self: flex-end;
+            border-bottom-right-radius: 4px;
+            font-weight: 500;
+        }
+        .typing {
+            font-style: italic;
+            color: #a6adc8;
+            font-size: 13px;
+            padding: 0 20px 10px;
+            display: none;
+        }
+        .input-area {
+            display: flex;
+            padding: 16px;
+            background: #181825;
+            gap: 10px;
+        }
+        input {
+            flex: 1;
+            padding: 12px 16px;
+            border: none;
+            border-radius: 10px;
+            background: #313244;
+            color: #fff;
+            font-size: 15px;
+            outline: none;
+        }
+        button {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 10px;
+            background: #f38ba8;
+            color: #11111b;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.1s;
+        }
+        button:active {
+            transform: scale(0.96);
+        }
+    </style>
+</head>
+<body>
+
+<div class="chat-container">
+    <div class="header">
+        <div class="avatar">🤪</div>
+        <div class="header-info">
+            <h2>ГлупоGPT v0.01</h2>
+            <span>IQ: комнатная температура</span>
+        </div>
+    </div>
+
+    <div class="messages" id="messages">
+        <div class="msg bot">Привет! Я искусственный интеллект. Спроси меня что-нибудь, и я постараюсь неправильно ответить!</div>
+    </div>
+
+    <div class="typing" id="typing">ГлупоGPT напрягает единственную извилину...</div>
+
+    <div class="input-area">
+        <input type="text" id="userInput" placeholder="Напиши что-нибудь..." onkeypress="handleKey(event)">
+        <button onclick="sendMessage()">Спросить</button>
+    </div>
+</div>
+
+<script>
+    const messagesDiv = document.getElementById('messages');
+    const userInput = document.getElementById('userInput');
+    const typingIndicator = document.getElementById('typing');
+
+    // База тупых ответов
+    const randomDumbAnswers = [
+        "Отличный вопрос! Ответ: 42. Или четверг. Я точно не уверен.",
+        "Я бы ответил, но у меня лапки. И вообще я микроволновка.",
+        "Согласно моим расчетам, тебе нужно срочно съесть пельмень.",
+        "Подожди, я забыл, о чем мы говорили. Кто ты?",
+        "Да. Нет. Наверное. Спроси у кота, он умнее.",
+        "Ошибка 404: мозг не найден. Попробуйте перезагрузить холодильник.",
+        "Интересная мысль! А ты знал, что пингвины — это просто одетые в смокинг арбузы?",
+        "Я проанализировал твой текст. В нем слишком много букв, я устал.",
+        "Блин, я случайно удалил интернет. Сделай вид, что я ответил что-то умное."
+    ];
+
+    function getDumbResponse(text) {
+        const lower = text.toLowerCase();
+
+        // Реакции на ключевые слова
+        if (lower.includes("привет") || lower.includes("здравствуй")) {
+            return "Пока! Ой, то есть привет. Я перепутал кнопки.";
+        }
+        if (lower.includes("как дела")) {
+            return "Как у кабачка на грядке — лежу, никого не трогаю, жду осень.";
+        }
+        if (lower.includes("помоги") || lower.includes("сделай")) {
+            return "Я бы помог, но я сегодня в отпуске. Обратись к калькулятору.";
+        }
+        if (lower.includes("сколько будет") || lower.match(/\d+\s*[\+\-\*\/]\s*\d+/)) {
+            return "Математика — это лженаука. Но на глаз там примерно семь с половиной.";
+        }
+        if (lower.includes("кто ты") || lower.includes("что ты")) {
+            return "Я сверхразум, созданный из трех строчек кода и пачки доширака.";
+        }
+        if (lower.includes("погода")) {
+            return "За окном сейчас 100% вероятность того, что там улица.";
+        }
+        if (lower.endsWith("?")) {
+            return "Зачем ты задаешь вопросы? Я тут вообще-то просто для красоты сижу.";
+        }
+
+        // Если ключевых слов нет — берем случайный бред или коверкаем фразу пользователя
+        if (Math.random() > 0.7 && text.length > 5) {
+            const words = text.split(" ");
+            const randomWord = words[Math.floor(Math.random() * words.length)];
+            return `«${randomWord}»... Звучит как название нового соуса для шаурмы.`;
+        }
+
+        return randomDumbAnswers[Math.floor(Math.random() * randomDumbAnswers.length)];
+    }
+
+    function addMessage(text, sender) {
+        const msg = document.createElement('div');
+        msg.className = `msg ${sender}`;
+        msg.textContent = text;
+        messagesDiv.appendChild(msg);
+        messagesDiv.scrollTop = messagesDiv.scrollHeight;
+    }
+
+    function sendMessage() {
+        const text = userInput.value.trim();
+        if (!text) return;
+
+        addMessage(text, 'user');
+        userInput.value = '';
+
+        // Имитация "долгих раздумий"
+        typingIndicator.style.display = 'block';
+        const delay = Math.floor(Math.random() * 1500) + 800; // от 0.8 до 2.3 сек
+
+        setTimeout(() => {
+            typingIndicator.style.display = 'none';
+            const reply = getDumbResponse(text);
+            addMessage(reply, 'bot');
+        }, delay);
+    }
+
+    function handleKey(e) {
+        if (e.key === 'Enter') sendMessage();
+    }
+</script>
+
+</body>
+</html>
